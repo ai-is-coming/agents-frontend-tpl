@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import ClientChat from "@/components/chatbot/client-chat";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function Home() {
+export default function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string>('')
+  // Unwrap params Promise using React.use()
+  const unwrappedParams = use(params)
+  const sessionId = parseInt(unwrappedParams.sessionId, 10)
 
   useEffect(() => {
     // Token is the email in this system
@@ -58,9 +61,10 @@ export default function Home() {
           </DropdownMenu>
         </div>
         <div className="w-full max-w-6xl">
-          <ClientChat initialSessionId={null} />
+          <ClientChat initialSessionId={sessionId} />
         </div>
       </main>
     </AuthGuard>
   );
 }
+

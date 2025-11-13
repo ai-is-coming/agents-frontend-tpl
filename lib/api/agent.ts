@@ -3,6 +3,7 @@
  */
 
 export interface AgentChatRequest {
+  sessionId: number
   prompt: string
   stream?: boolean
   webSearch?: boolean
@@ -20,7 +21,8 @@ export interface AgentChatResponse {
  */
 export async function chatStream(
   request: AgentChatRequest,
-  token: string
+  token: string,
+  options?: { signal?: AbortSignal }
 ): Promise<Response> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -30,7 +32,9 @@ export async function chatStream(
   const response = await fetch(`/api/agent/chat`, {
     method: 'POST',
     headers,
+    signal: options?.signal,
     body: JSON.stringify({
+      sessionId: request.sessionId,
       prompt: request.prompt,
       stream: request.stream ?? true,
       webSearch: request.webSearch ?? false,
