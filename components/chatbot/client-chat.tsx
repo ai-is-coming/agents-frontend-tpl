@@ -11,7 +11,7 @@ import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from "@/componen
 import type { ToolUIPart } from "ai";
 import { CheckIcon, GlobeIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getToken } from "@/lib/api-client";
 import { chatStream } from "@/lib/api/agent";
@@ -39,6 +39,7 @@ interface ClientChatProps {
 export default function ClientChat({ initialSessionId }: ClientChatProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [model, setModel] = useState<string>(models[0].id);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [text, setText] = useState<string>("");
@@ -341,9 +342,9 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
         void refreshSessions();
 
         // Update URL after streaming completes (if we created a new session)
-        // This happens after streaming is done, so messages are already saved to server
-        // When the URL changes, the component will remount and load messages from server
-        if (sid) {
+        // Only push if the current path is different from the target path
+        // This prevents unnecessary component remounting and message reloading
+        if (sid && pathname !== `/c/${sid}`) {
           router.push(`/c/${sid}`);
         }
       }
