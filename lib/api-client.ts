@@ -3,7 +3,9 @@
  * Automatically adds Bearer token to request headers
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api'
+
+console.log('API_BASE_URL:', API_BASE_URL)
 
 export interface ApiRequestOptions extends RequestInit {
   skipAuth?: boolean
@@ -123,5 +125,53 @@ export function apiPut<T = any>(
  */
 export function apiDelete<T = any>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(endpoint, { ...options, method: 'DELETE' })
+}
+
+/**
+ * Stream request - returns raw Response for streaming
+ * Use this for endpoints that return streaming responses (e.g., Server-Sent Events)
+ */
+export async function apiStream(
+  endpoint: string,
+  options: ApiRequestOptions = {}
+): Promise<Response> {
+  const { skipAuth = false, headers = {}, ...restOptions } = options
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`
+
+  // Normalize headers to a Headers instance
+  const requestHeaders = new Headers(headers as HeadersInit)
+  if (!requestHeaders.has('Content-Type')) {
+    requestHeaders.set('Content-Type', 'application/json')
+  }
+
+  // Add Bearer token (if not skipping auth)
+  if (!skipAuth) {
+    const token = getToken()
+    if (token) {
+      requestHeaders.set('Authorization', `Bearer ${token}`)
+    }
+  }
+
+  const response = await fetch(url, {
+    ...restOptions,
+    headers: requestHeaders,
+  })
+
+  // If 401, clear token and redirect to login page
+  if (response.status === 401) {
+    clearToken()
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Request failed' }))
+    throw new Error(error.error || `HTTP ${response.status}`)
+  }
+
+  return response
 }
 

@@ -13,7 +13,6 @@ import { CheckIcon, GlobeIcon, ChevronLeft, ChevronRight, Plus } from "lucide-re
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getToken } from "@/lib/api-client";
 import { chatStream } from "@/lib/api/agent";
 
 import { Button } from "@/components/ui/button";
@@ -229,11 +228,6 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
         setStatus('streaming');
         setStreamingMessageId(assistantMessageId);
 
-        const token = getToken();
-        if (!token) {
-          throw new Error('Not authenticated');
-        }
-
         const trimmed = (content || '').trim();
         const title = trimmed ? trimmed.slice(0, 50) : undefined;
         sid = await ensureSessionId(title);
@@ -248,7 +242,7 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
           webSearch: Boolean(useWebSearch),
           provider: prov,
           model: mdl,
-        }, token, { signal: localAc.signal });
+        }, { signal: localAc.signal });
 
         if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
