@@ -1,151 +1,151 @@
 # E2E Tests for Session List UI
 
-## 问题描述
+## Problem Description
 
-这些测试用于检查 session 列表的 UI 问题：
-1. Session 列表文字是否被滚动条遮挡
-2. Session 列表是否有滚动条显示
-3. 文字截断和 padding 是否正确
+These tests check session list UI issues:
+1. Whether session list text is covered by scrollbar
+2. Whether session list has visible scrollbar
+3. Whether text truncation and padding are correct
 
-## 运行测试
+## Running Tests
 
-### 前提条件
+### Prerequisites
 
-1. 确保前端开发服务器正在运行：
+1. Ensure frontend development server is running:
 ```bash
 cd agents-frontend-tpl
 npm run dev
-# 服务器应该运行在 http://localhost:4000
+# Server should run at http://localhost:4000
 ```
 
-2. 确保后端服务器正在运行（如果需要真实 API）：
+2. Ensure backend server is running (if real API is needed):
 ```bash
 cd agents-backend-tpl
 npm run dev
 ```
 
-### 运行测试（Headless 模式）
+### Run Tests (Headless Mode)
 
-在 headless 模式下运行所有测试（浏览器不可见）：
+Run all tests in headless mode (browser not visible):
 
 ```bash
 cd agents-frontend-tpl
 npx playwright test tests/e2e/session-list-ui.spec.ts
 ```
 
-### 运行测试（Headed 模式 - 推荐用于调试）
+### Run Tests (Headed Mode - Recommended for Debugging)
 
-在 headed 模式下运行测试（可以看到浏览器）：
+Run tests in headed mode (browser visible):
 
 ```bash
 cd agents-frontend-tpl
 npx playwright test tests/e2e/session-list-ui.spec.ts --config=tests/e2e/playwright.headed.config.ts --headed
 ```
 
-### 运行单个测试
+### Run Individual Tests
 
-运行特定的测试用例：
+Run specific test cases:
 
 ```bash
-# 只运行滚动条可见性测试
+# Run only scrollbar visibility test
 npx playwright test tests/e2e/session-list-ui.spec.ts -g "should have visible scrollbar"
 
-# 只运行文字遮挡测试
+# Run only text coverage test
 npx playwright test tests/e2e/session-list-ui.spec.ts -g "should not be covered by scrollbar"
 
-# 运行视觉检查测试（会保持浏览器打开）
+# Run visual inspection test (keeps browser open)
 npx playwright test tests/e2e/session-list-ui.spec.ts -g "visual inspection" --headed
 ```
 
-### 调试模式
+### Debug Mode
 
-使用 Playwright Inspector 进行调试：
+Debug using Playwright Inspector:
 
 ```bash
 npx playwright test tests/e2e/session-list-ui.spec.ts --debug
 ```
 
-### 查看测试报告
+### View Test Report
 
 ```bash
 npx playwright show-report
 ```
 
-## 测试用例说明
+## Test Case Descriptions
 
 ### 1. `session list should have visible scrollbar when content overflows`
 
-测试当有很多 session 时，滚动条是否正确显示。
+Tests whether scrollbar displays correctly when there are many sessions.
 
-**检查项：**
-- ScrollArea 组件是否可见
-- 内容高度是否超过视口高度
-- 滚动条是否可见
+**Checks:**
+- Whether ScrollArea component is visible
+- Whether content height exceeds viewport height
+- Whether scrollbar is visible
 
 ### 2. `session list text should not be covered by scrollbar`
 
-测试长标题的 session 文字是否被滚动条遮挡。
+Tests whether session text with long titles is covered by scrollbar.
 
-**检查项：**
-- Viewport 是否有足够的 padding-right
-- 标题文字和滚动条之间是否有间隙
-- 文字是否正确截断（truncate）
+**Checks:**
+- Whether Viewport has sufficient padding-right
+- Whether there is gap between title text and scrollbar
+- Whether text is properly truncated
 
 ### 3. `session list container should have proper layout`
 
-测试 session 列表容器的布局是否正确。
+Tests whether session list container layout is correct.
 
-**检查项：**
-- Sidebar 宽度是否为 280px
-- ScrollArea 是否有 flex-1 class
-- 内部 div 的 padding 是否正确
+**Checks:**
+- Whether Sidebar width is 280px
+- Whether ScrollArea has flex-1 class
+- Whether inner div padding is correct
 
 ### 4. `visual inspection - open browser to see session list`
 
-用于手动视觉检查的测试，会创建各种长度的标题并截图。
+Test for manual visual inspection, creates titles of various lengths and takes screenshots.
 
-**输出：**
-- 截图保存在 `test-results/session-list-visual.png`
+**Output:**
+- Screenshot saved at `test-results/session-list-visual.png`
 
-## 常见问题
+## Common Issues
 
-### Q: 测试失败，提示连接不上服务器
+### Q: Test fails, cannot connect to server
 
-A: 确保前端开发服务器正在运行在 `http://localhost:4000`
+A: Ensure frontend development server is running at `http://localhost:4000`
 
-### Q: 如何修改测试的 baseURL？
+### Q: How to modify test baseURL?
 
-A: 编辑 `playwright.config.ts` 或 `playwright.headed.config.ts` 中的 `baseURL` 配置
+A: Edit `baseURL` configuration in `playwright.config.ts` or `playwright.headed.config.ts`
 
-### Q: 如何让浏览器保持打开状态以便手动检查？
+### Q: How to keep browser open for manual inspection?
 
-A: 在测试代码中添加 `await page.waitForTimeout(30000)` 或使用 `--debug` 模式
+A: Add `await page.waitForTimeout(30000)` in test code or use `--debug` mode
 
-### Q: 测试通过但我仍然看到 UI 问题
+### Q: Test passes but I still see UI issues
 
-A: 使用 headed 模式运行测试并手动检查，或者查看截图和视频录制
+A: Run test in headed mode and manually inspect, or check screenshots and video recordings
 
-## 修复建议
+## Fix Suggestions
 
-如果测试发现问题，可能的修复方案：
+If tests find issues, possible solutions:
 
-### 问题 1: 文字被滚动条遮挡
+### Issue 1: Text covered by scrollbar
 
-**原因：** ScrollArea 的 viewport 没有足够的 padding-right
+**Cause:** ScrollArea viewport doesn't have sufficient padding-right
 
-**修复：** 在 `components/ui/scroll-area.tsx` 中确保 viewport 有足够的 padding：
+**Fix:** Ensure viewport has sufficient padding in `components/ui/scroll-area.tsx`:
 
 ```tsx
 <ScrollAreaPrimitive.Viewport
-  className="... pr-3 md:pr-4" // 确保有右侧 padding
+  className="... pr-3 md:pr-4" // Ensure right padding
 >
 ```
 
-### 问题 2: 滚动条不可见
+### Issue 2: Scrollbar not visible
 
-**原因：** 可能是 ScrollArea 组件配置问题或 CSS 样式问题
+**Cause:** Possible ScrollArea component configuration or CSS style issue
 
-**修复：** 检查 `components/chatbot/client-chat.tsx` 中的 ScrollArea 使用：
+**Fix:** Check ScrollArea usage in `components/chatbot/client-chat.tsx`:
 
 ```tsx
 <ScrollArea className="flex-1">
@@ -155,11 +155,11 @@ A: 使用 headed 模式运行测试并手动检查，或者查看截图和视频
 </ScrollArea>
 ```
 
-### 问题 3: Session 按钮内容溢出
+### Issue 3: Session button content overflow
 
-**原因：** 按钮内部的 div 没有正确的 padding 或 truncate
+**Cause:** Button inner div doesn't have correct padding or truncate
 
-**修复：** 确保按钮和内部 div 有正确的样式：
+**Fix:** Ensure button and inner div have correct styles:
 
 ```tsx
 <button className="w-full rounded-md px-3 py-2 text-left hover:bg-accent">
@@ -168,9 +168,9 @@ A: 使用 headed 模式运行测试并手动检查，或者查看截图和视频
 </button>
 ```
 
-## 相关文件
+## Related Files
 
-- `components/chatbot/client-chat.tsx` - Session 列表主组件
-- `components/ui/scroll-area.tsx` - ScrollArea 组件
-- `lib/api/session.ts` - Session API 调用
+- `components/chatbot/client-chat.tsx` - Session list main component
+- `components/ui/scroll-area.tsx` - ScrollArea component
+- `lib/api/session.ts` - Session API calls
 

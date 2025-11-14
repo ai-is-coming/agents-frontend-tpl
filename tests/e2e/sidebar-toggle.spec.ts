@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Sidebar Toggle', () => {
   test.beforeEach(async ({ page }) => {
-    // 设置 token 绕过登录
+    // Set token to bypass login
     await page.goto('http://127.0.0.1:5001/');
     await page.evaluate(() => {
       localStorage.setItem('token', 'fake-token-for-testing');
@@ -12,41 +12,41 @@ test.describe('Sidebar Toggle', () => {
   });
 
   test('should toggle sidebar visibility', async ({ page }) => {
-    // 检查 sidebar 初始状态是可见的
+    // Check sidebar initial state is visible
     const sidebar = page.locator('aside').first();
     await expect(sidebar).toBeVisible();
 
-    // 获取所有按钮
+    // Get all buttons
     const allButtons = await page.locator('button').all();
     console.log(`Total buttons: ${allButtons.length}`);
 
-    // 找到 ChevronLeft 按钮（第2个按钮，索引1）
+    // Find ChevronLeft button (2nd button, index 1)
     const hideButton = page.locator('button').nth(1);
     await hideButton.click();
     await page.waitForTimeout(300);
 
-    // 检查 sidebar 是否隐藏
+    // Check if sidebar is hidden
     await expect(sidebar).not.toBeVisible();
 
-    // 找到 ChevronRight 按钮（sidebar 隐藏后，它应该是第2个按钮）
+    // Find ChevronRight button (after sidebar hidden, it should be 2nd button)
     const showButton = page.locator('button').nth(1);
     await showButton.click();
     await page.waitForTimeout(300);
 
-    // 检查 sidebar 是否重新显示
+    // Check if sidebar is shown again
     await expect(sidebar).toBeVisible();
   });
 
   test('should show new chat button above suggestions', async ({ page }) => {
-    // 查找 New 按钮（黑色圆形按钮）
+    // Find New button (black circular button)
     const newButton = page.locator('button.rounded-full.bg-black').first();
     await expect(newButton).toBeVisible();
 
-    // 检查按钮是否包含 Plus 图标
+    // Check if button contains Plus icon
     const plusIcon = newButton.locator('svg');
     await expect(plusIcon).toBeVisible();
 
-    // 检查按钮位置是否在预置对话按钮上方
+    // Check if button position is above preset conversation buttons
     const newButtonBox = await newButton.boundingBox();
     const firstSuggestion = page.locator('button').filter({ hasText: "What's the weather" }).first();
     const suggestionBox = await firstSuggestion.boundingBox();
@@ -57,12 +57,12 @@ test.describe('Sidebar Toggle', () => {
   });
 
   test('should create new chat when clicking new button', async ({ page }) => {
-    // 点击 New 按钮
+    // Click New button
     const newButton = page.locator('button.rounded-full.bg-black').first();
     await newButton.click();
     await page.waitForTimeout(500);
 
-    // 验证按钮可点击且没有错误
+    // Verify button is clickable and has no errors
     await expect(newButton).toBeEnabled();
   });
 

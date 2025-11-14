@@ -8,12 +8,12 @@ test('inspect layout', async ({ page }) => {
   await page.reload();
   await page.waitForTimeout(2000);
 
-  // 获取页面 HTML
+  // Get page HTML
   const html = await page.content();
   console.log('=== PAGE HTML ===');
   console.log(html);
 
-  // 查找所有按钮
+  // Find all buttons
   const buttons = await page.locator('button').all();
   console.log(`\n=== FOUND ${buttons.length} BUTTONS ===`);
   for (let i = 0; i < buttons.length; i++) {
@@ -23,11 +23,11 @@ test('inspect layout', async ({ page }) => {
     console.log(`Button ${i}: text="${text}", class="${className}"`);
   }
 
-  // 查找 aside
+  // Find aside
   const asides = await page.locator('aside').all();
   console.log(`\n=== FOUND ${asides.length} ASIDES ===`);
 
-  // 查找 ChevronLeft 图标
+  // Find ChevronLeft icon
   const chevronLefts = await page.locator('svg').all();
   console.log(`\n=== FOUND ${chevronLefts.length} SVG ELEMENTS ===`);
 

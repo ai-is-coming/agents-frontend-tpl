@@ -38,7 +38,7 @@ test('tool messages are persisted and order is text -> tool -> text', async ({ p
   const textarea = page.getByPlaceholder('What would you like to know?')
   const submit = page.getByRole('button', { name: 'Submit' })
 
-  await textarea.fill('请演示一次工具调用：先输出一点解释性文字，然后调用工具，最后再输出结论。')
+  await textarea.fill('Please demonstrate a tool call: first output some explanatory text, then call the tool, and finally output a conclusion.')
   await submit.click()
 
   await page.waitForRequest((req) => req.url().includes('/agent/chat') && req.method() === 'POST')

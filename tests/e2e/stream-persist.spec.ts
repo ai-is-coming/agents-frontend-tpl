@@ -41,7 +41,7 @@ test('assistant message continues to persist after refresh mid-stream', async ({
   const textarea = page.getByPlaceholder('What would you like to know?')
   const submit = page.getByRole('button', { name: 'Submit' })
 
-  await textarea.fill('请详细介绍一下 Playwright，并分多段回答，输出尽量长，同时可以演示一次工具调用。')
+  await textarea.fill('Please provide a detailed introduction to Playwright, answer in multiple paragraphs, make the output as long as possible, and demonstrate a tool call.')
   await submit.click()
 
   // Wait for chat request to be issued and some streaming to begin

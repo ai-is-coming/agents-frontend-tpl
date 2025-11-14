@@ -86,7 +86,7 @@ test.describe('Session List UI', () => {
     await page.route('**/session/list**', async (route) => {
       const sessions = Array.from({ length: 80 }, (_, i) => ({
         id: 10_000 - i,
-        title: `This is a very very very long session title to test scrollbar overlap issue ${i} — 这是一个很长的标题用于测试滚动条遮挡问题`,
+        title: `This is a very very very long session title to test scrollbar overlap issue ${i} and text truncation behavior`,
         status: 1,
         created_at: new Date(Date.now() - (i + 1) * 60_000).toISOString(),
         updated_at: new Date(Date.now() - i * 30_000).toISOString(),
@@ -212,7 +212,7 @@ test.describe('Session List UI', () => {
         { id: 1, title: 'Short', status: 1 },
         { id: 2, title: 'Medium length title here', status: 1 },
         { id: 3, title: 'This is a very long title that should be truncated and might overlap with scrollbar', status: 1 },
-        { id: 4, title: '这是一个中文标题测试滚动条遮挡问题这是一个中文标题测试滚动条遮挡问题', status: 1 },
+        { id: 4, title: 'Another extremely long title to test scrollbar coverage and text truncation behavior in the session list', status: 1 },
         ...Array.from({ length: 46 }, (_, i) => ({
           id: i + 5,
           title: `Session ${i + 5} - ${i % 3 === 0 ? 'Long title to test truncation and scrollbar overlap' : 'Normal'}`,

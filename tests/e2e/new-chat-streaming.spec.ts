@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test'
 
 test.describe('New Chat Streaming', () => {
   test.beforeEach(async ({ page }) => {
-    // 监听控制台消息
+    // Listen to console messages
     page.on('console', msg => {
       const type = msg.type();
       const text = msg.text();
       console.log(`[Browser ${type}]:`, text);
     });
     
-    // 监听页面错误
+    // Listen to page errors
     page.on('pageerror', error => {
       console.log('[Browser PAGE ERROR]:', error.message);
     });

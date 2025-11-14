@@ -14,7 +14,7 @@ test('left session list has padding so titles are not covered by scrollbar', asy
   await page.route('**/session/list**', async (route) => {
     const sessions = Array.from({ length: 80 }, (_, i) => ({
       id: 10_000 - i,
-      title: `This is a very very very long session title to test right padding near scrollbar index ${i} — 这是一个很长的标题用于测试滚动条遮挡问题`,
+      title: `This is a very very very long session title to test right padding near scrollbar index ${i} and text truncation behavior`,
       status: 1,
       created_at: new Date(Date.now() - (i + 1) * 60_000).toISOString(),
       updated_at: new Date(Date.now() - i * 30_000).toISOString(),
