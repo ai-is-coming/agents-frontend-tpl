@@ -45,16 +45,17 @@ export async function apiRequest<T = any>(
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`
 
-  const requestHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...headers,
+  // Normalize headers to a Headers instance
+  const requestHeaders = new Headers(headers as HeadersInit)
+  if (!requestHeaders.has('Content-Type')) {
+    requestHeaders.set('Content-Type', 'application/json')
   }
 
   // Add Bearer token (if not skipping auth)
   if (!skipAuth) {
     const token = getToken()
     if (token) {
-      requestHeaders['Authorization'] = `Bearer ${token}`
+      requestHeaders.set('Authorization', `Bearer ${token}`)
     }
   }
 

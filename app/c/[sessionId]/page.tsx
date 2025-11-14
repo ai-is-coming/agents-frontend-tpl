@@ -19,9 +19,8 @@ import {
 export default function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string>('')
-  // Unwrap params Promise using React.use()
-  const unwrappedParams = use(params)
-  const sessionId = parseInt(unwrappedParams.sessionId, 10)
+  const { sessionId: sessionParam } = use(params)
+  const sessionId = parseInt(sessionParam, 10)
 
   useEffect(() => {
     // Token is the email in this system

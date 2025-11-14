@@ -11,7 +11,7 @@ import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from "@/componen
 import type { ToolUIPart } from "ai";
 import { CheckIcon, GlobeIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getToken } from "@/lib/api-client";
 import { chatStream } from "@/lib/api/agent";
@@ -38,8 +38,7 @@ interface ClientChatProps {
 
 export default function ClientChat({ initialSessionId }: ClientChatProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+
   const [model, setModel] = useState<string>(models[0].id);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [text, setText] = useState<string>("");
@@ -50,6 +49,8 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
   const [loadingSessions, setLoadingSessions] = useState<boolean>(false);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
   const currentAbortRef = useRef<AbortController | null>(null)
+  const userNavigatedRef = useRef<boolean>(false)
+
   const [sessionQuery, setSessionQuery] = useState<string>("")
   const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
 
@@ -118,46 +119,84 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
   }, [sessionId, refreshSessions])
 
   const handleNewChat = useCallback(async () => {
+    userNavigatedRef.current = true;
     setSessionId(null)
     setMessages([])
-    // Navigate to home page for new chat with a query parameter
-    router.push('/?new=true')
+    // Update URL bar only (no navigation) to indicate new chat mode
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/?new=true');
+    }
     await refreshSessions()
-  }, [refreshSessions, router])
+  }, [refreshSessions])
 
-  const handleSelectSession = useCallback(async (sid: number) => {
-    // Update URL to /c/{sessionId}
-    // The URL change will trigger a re-render with new initialSessionId
-    // which will load the messages in useEffect
-    router.push(`/c/${sid}`)
-  }, [router])
+  const handleSelectSession = useCallback((sid: number) => {
+    userNavigatedRef.current = true;
+    // Set local state first for immediate UI feedback
+    setSessionId(sid);
+    // Fire-and-forget loading; don't block clicks
+    void loadMessagesForSession(sid);
+    // Only change the URL bar to reflect the selected session
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', `/c/${sid}`);
+    }
+  }, [loadMessagesForSession])
 
   // Initialize: load sessions and messages
   useEffect(() => {
     (async () => {
-      const list = await refreshSessions()
-
-      // Check if this is a "new chat" request
-      const isNewChat = searchParams?.get('new') === 'true'
+      await refreshSessions()
 
       // If initialSessionId is provided and valid, load that session
       if (initialSessionId !== null && initialSessionId > 0) {
         setSessionId(initialSessionId)
         await loadMessagesForSession(initialSessionId)
-      } else if (initialSessionId === null && !isNewChat) {
-        // If no initialSessionId (home page) and not in new chat mode, pick the latest session and redirect
-        const sid = list?.[0]?.id
-        if (sid) {
-          setSessionId(sid)
-          // Update URL to reflect the selected session
-          router.push(`/c/${sid}`)
-          await loadMessagesForSession(sid)
-        }
       }
+      // Otherwise, do not auto-select any session on the home page.
+      // The user can pick a session from the sidebar or click New Chat.
     })()
-  }, [initialSessionId, searchParams, refreshSessions, loadMessagesForSession, router])
+  }, [initialSessionId, refreshSessions, loadMessagesForSession])
 
   const [messages, setMessages] = useState<MessageType[]>(initialMessages);
+
+  // Keep UI in sync with URL (supports back/forward navigation)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const onPop = () => {
+      const { pathname, search } = window.location;
+      const match = pathname.match(/^\/c\/(\d+)/);
+      if (match) {
+        const sid = parseInt(match[1], 10);
+        setSessionId((prev) => {
+          if (prev !== sid) {
+            void loadMessagesForSession(sid);
+          }
+          return sid;
+        });
+        return;
+      }
+      const sp = new URLSearchParams(search);
+      if (sp.get('new') === 'true') {
+        setSessionId(null);
+        setMessages([]);
+      }
+    };
+
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [loadMessagesForSession]);
+
+  // Ensure the active session is visible in the sidebar when sessionId or list changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!sessionId) return;
+    const el = document.getElementById(`session-item-${sessionId}`);
+    if (el && typeof el.scrollIntoView === 'function') {
+      // Use nearest to avoid jarring jumps
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+    }
+  }, [sessionId, sessions]);
+
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
   const selectedModelData = models.find((m) => m.id === model);
@@ -342,14 +381,13 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
         void refreshSessions();
 
         // Update URL after streaming completes (if we created a new session)
-        // Only push if the current path is different from the target path
-        // This prevents unnecessary component remounting and message reloading
-        if (sid && pathname !== `/c/${sid}`) {
-          router.push(`/c/${sid}`);
+        // Change only the URL bar to avoid remounting/reloading
+        if (sid && sessionId === sid && typeof window !== 'undefined' && window.location.pathname !== `/c/${sid}`) {
+          window.history.pushState({}, '', `/c/${sid}`);
         }
       }
     })();
-  }, [model, useWebSearch, ensureSessionId, router]);
+  }, [model, useWebSearch, ensureSessionId, router, sessionId]);
 
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text && message.text.trim());
@@ -387,6 +425,7 @@ export default function ClientChat({ initialSessionId }: ClientChatProps) {
                   return (
                     <button
                       key={s.id}
+                      id={`session-item-${s.id}`}
                       onClick={() => handleSelectSession(s.id)}
                       className={`rounded-md px-2 py-2 text-left hover:bg-accent flex flex-col min-w-0 overflow-hidden ${active ? 'bg-accent' : ''}`}
                       style={{ width: '100%', maxWidth: '254px' }}
